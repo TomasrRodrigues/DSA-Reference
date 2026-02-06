@@ -3,85 +3,223 @@
 #### Table of Contents
 1. [Introduction](#introduction)
 2. [Time and Space Complexity](#time-and-space-complexity)
-3. [Big-O Notation](#big-o-notation)
-4. [Analyzing Algorithms](#analyzing-algorithms)
-5. [Case Study: Maximum Subsequence Sum](#case-study-maximum-subsequence-sum)
+3. [Asymptotic Analysis Fundamentals](#asymptotic-analysis-fundamentals)
+4. [Big-O Notation](#big-o-notation)
+5. [Other Asymptotic Notations](#other-asymptotic-notations)
+6. [Analyzing Algorithms](#analyzing-algorithms)
+7. [Amortized Analysis](#amortized-analysis)
+8. [Case Study: Maximum Subsequence Sum](#case-study-maximum-subsequence-sum)
 
 ---
 ## Introduction
 
-An algorithm is a set of precise intructions for solving a problem. The key distinction between an algorithm and a program is that an algorithm is abstract while a program is a concrete implementation.
+Algorithm complexity analysis is the theoretical study of computer program performance and resource usage. Rather than measuring actual execution time (which varies by machine, implementation, and input), we analyze how the algorithm's resource requirements grow as the input size increases.
 
-In algorithm we must analyze:
-1. Correctness: Prove the algorithm is correct
-2. Efficiency: Determine resources required (time, space)
+An algorithm is a clearly specified set of instructions to solve a problem. Once we establish correctness, the next crucial question we must answer is how much resources does it require?
+
+There are two faces of efficiency:
+1. **Time Complexity**: How execution time grows with input size
+2. **Space Complexity**: How memory usage grows with input size
+
+These are often trade-offs: faster algorithms may use more memory, and vice versa.
 
 We must analyze complexity to:
 - Compare different algorithms for the same problem
 - Predict how resource requirements grow with input size
 - Choose the most efficient algorithm for a problem
 
+As Donald Knuth stated: "Premature optimization is the root of all evil." But informed optimization, guided by complexity analysis, is essential for building scalable systems.
+
+
 ---
 ## Time and Space Complexity
 
-To analyze efficiency we must analyze both the time and space complexity:
-- Time Complexity ($T(n)$): Execution time as a function of input size n
-- Space Complexity ($S(n)$): Memory space required as a function of input size n
+To analyze efficiency we must analyze both the time and space complexity.
 
-For that we analyze three "types" of cases - The Best, the Average and the worst cases:
+#### Time Complexity
+Time complexity, $T(n)$, is a function that describes the number of primitive operations an algorithm performs as a function of input size n.
+
+Primitive Operations (each counted as one unit):
+- Arithmetic operations: `+`, `-`, `*`, `/`, `%`
+- Comparisons: `<`,`>`,`==`,`!=`,`<=`,`>=`
+- Assignments: `=`
+- Array access: `arr[i]`
+- Function calls/returns
+
+Not counted (absorbed into constants):
+- Declaration statements
+- Comments
+- Syntax elements (braces, parentheses)
+
+**Example: Counting Operations**:
+```cpp
+int sum_array(const vector<int>& arr) {
+    int sum = 0;              // 1 operation (assignment)
+    for (int i = 0; i < arr.size(); i++) {  // 1 (init) + n+1 (comparisons) + n (increments)
+        sum += arr[i];        // n (additions) + n (array accesses) + n (assignments)
+    }
+    return sum;               // 1 operation (return)
+}
+```
+**Total Operations**:
+$$
+T(n) = 1 + 1 + (n + 1) + n + 3n + 1 = 5n +4
+$$
+
+But we typically write this as $T(n)=O(n)$ because constants don't matter for large n.
+
+
+#### Space Complexity
+
+Space complexity $S(n)$ describes the amount of memory an algorithm uses as a function of input size n.
+
+Components:
+1. **Input Space**: Memory for input data (usually not counted)
+2. **Auxiliary Space**: Extra memory used by algorithm
+3. **Output Space**: Memory for output (sometimes counted)
+
+Typically, when we say "space complexity," we mean auxiliary space.
+
+**Example: Space Analysis**:
+```cpp
+// O(1) auxiliary space - only uses a few variables
+int sum_array(const vector<int>& arr) {
+    int sum = 0;      // O(1)
+    for (int i = 0; i < arr.size(); i++) {
+        sum += arr[i];
+    }
+    return sum;
+}
+
+// O(n) auxiliary space - creates new array
+vector<int> double_array(const vector<int>& arr) {
+    vector<int> result(arr.size());  // O(n) space
+    for (int i = 0; i < arr.size(); i++) {
+        result[i] = arr[i] * 2;
+    }
+    return result;
+}
+
+// O(n) auxiliary space - recursive call stack
+int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);  // Each call uses stack space
+}
+// Call stack depth = n, so S(n) = O(n)
+```
+
 
 | Case | Description | Usefulness |
 |--|----|---|
-| Best Case | Minimum time/space needed | Not very useful (optimistic) |
-| Average Case | Expected time/space on typical inputs | Very useful |
-| Worst Case | Maximum time/space needed | Very useful (guarantees) |
+| Best Case | Minimum time/space needed over all inputs of size $n$ | Usually not very informative |
+| Average Case | Expected time/space over all inputs of size n | Most realistic, but hard to analyze |
+| Worst Case | Maximum time/space needed over all inputs os size n | Provides guarantees, commonly analyzed |
+
+
+**Example: Linear Search**:
+```cpp
+int linear_search(const vector<int>& arr, int target) {
+    for (int i = 0; i < arr.size(); i++) {
+        if (arr[i] == target) {
+            return i;  // Found!
+        }
+    }
+    return -1;  // Not found
+}
+```
+**Case Analysis:**
+- **Best Case**: $T_{best} (n) = O(1)$ - target is first element
+- **Worst Case**: $T_{worst} (n) = O(n)$ - target is last element or not present
+- **Average Case**: $T_{avg}(n) = O(n)$ - on average, check half the elements
+
+For most algorithms, we focus on worst-case complexity because it provides guarantees.
+
+
+---
+## Asymptotic Analysis Fundamentals
+
+The key insight, is that for large inputs, the growth rate dominates the exact count of operations.
+
+As n grows, the $n^2$ term dominates completely. The other terms become negligible. This is shy we can simplify $3n^2+100n+500$ to just $O(n^2)$
+
+**Principles of Asymptotic Analysis**:
+1. Ignore Constants
+2. Ignore Lower-Order Terms
+3. Focus on Dominant Term
+
+By ignoring constants, we focus on the fundamental algorithmic efficiency, which is independent of these factors.
 
 
 ---
 ## Big-O Notation
 
-To analyze complexity we usually do an asymptotic analysis. This means that we focus on growth rate rather than exact values:
-- For large inputs, dominant terms matter most
-- Constant coefficients become less significant
-- We want to know how the algorithm scales
-
-Only the dominant term is used because it is the one that determines the behavior. Let's suppose we have a function $f(n)= n^3 + 350n^2 + n$. For $n=10,000$, the real value is $=1,000,350,010,000$ and the estimated (using $n^3$) is $=1,000,000,000,000$. The error is only $0,35%. This error diminishes even more with bigger inputs.
-
-#### Big-O Definition
-
-$f(n) = O(g(n))$ if there exist positive constants $c$ and $n_0$ such that:
+Big-O notation provides an upper bound on the growth rate of a function. Let $f(n)$ and $g(n)$ be functions mapping positive integers to positive real numbers.
 
 $$
-f(n) \leq c \cdot g(n) \quad \text{for all } n > n_0
+f(n)=O(g(n))
 $$
 
-This means that $g(n)$ is an upper bound on the growth of $f(n)$ for large n.
+if and only if there exist positive constants $c$ and $n_0$ such that:
+$$
+f(n) \leq c \cdot g(n) \quad \text{for all } n \geq n_0
+$$
 
-Important properties:
-1. If $f(n) = O(n^2)$, it is also $O(n^3)$ (but we want the tightest bound)
-2. Polynomial complexity: $c_k \cdot n^k + c_{k-1} \cdot n^{k-1} + ... + c_1 \cdot n + c_0 = O(n^k)$
-3. Logarithmic base doesn't matter: $log_2(n) = O(log (n))$
-4. Constants: $4 = O(1)$
+Basically, big-O provides an upper bound on the growth rate of a function. For sufficiently large n, $f(n)$ grows no faster than $g(n)$.
 
-#### Other Asymptotic Notations
+**Properties of Big-O**:
+1. **Transitivity**: If $f=O(g)$ and $g=O(h)$, then $f=O(h)$
+2. **Sum Rule**: If $f_1=O(g_1)$ and $f_2=O(g_2)$, then:
+$$
+f_1+f_2 = O(max(g_1,g_2))
+$$
+More formally: $f_1+f_2=O(g_1+g_2)$
+3. **Product Rule**: If $f_1 = O(g_1)$ and $f_2=O(g_2)$, then:
+$$
+f_1 \cdot f_2 = O(g_1 \cdot g_2)
+$$
+4. **Polynomial Rule**: If $f(n)$ is a polynomial of degree k:
+$$
+f(n)=a_kn^k+a_{k-1}n^{k-1} + ... + a_1n+ a_0
+$$
+Then: $f(n) = O(n^k)$
+5. **Logarithm Rule**: For any constants $k>0$ and $b>1$:
+$$
+log^kn=O(n)
+$$
+That is, any power of logarithm grows slower than any positive power of n.
+
+---
+## Other Asymptotic Notations
+While big-O is most common, other notations provide different bounds.
 
 ##### Big-Omega (Ω) - Lower Bound
 $f(n) = Ω(g(n))$ if there exists positive constants $c$ and $n_0$, such that:
 $$
 f(n) \geq c \cdot g(n) \quad \text{for all } n \geq n_0
 $$
+This means that $g(n)$ is a lower bound on $f(n)$. The function grows at least as fast as $g(n)$
 
 ##### Big-Theta (Θ) - Tight Bound
-$f(n) = Θ(g(n))$ if:
+$f(n) = Θ(g(n))$ if and only if:
 $$
 f(n) = O(g(n)) \quad \text{and} \quad f(n) = Ω(g(n))
 $$
+
+Equivalently: There exist positive constants $c_1$, $c_2$ and $n_0$ such that:
+$$
+c_1 \cdot g(n) \leq f(n) \leq c_2 \cdot g(n) \quad \text{for all } n \geq n_0
+$$
+Interpretation: $f(n)$ grows at exactly the same rate as $g(n)$ (up to constant factors)
 
 ##### Little-o (o) - Strict Upper Bound
 $f(n) = o(g(n))$ if there exist positive constants $c$ and $n_0$ such that:
 $$
 f(n) < c \cdot g(n) \quad \text{for all } n \geq n_0
 $$
+Interpretation: $f$ grows strictly slower than g.
+Equivalently: 
+$$\lim_{n \to \infty} \frac{f(n)}{g(n)} = 0$$
+
 
 ($g(n)$ is both upper and lower bound)
 
@@ -90,16 +228,16 @@ $$
 
 From fastest to slowest:
 
-| Notation | Name | Example |
-|----------|------|---------|
-| O(1) | Constant | Array access, arithmetic operations |
-| O(log n) | Logarithmic | Binary search, balanced tree operations |
-| O(n) | Linear | Linear search, traversing an array |
-| O(n log n) | Linearithmic | Efficient sorting (MergeSort, QuickSort) |
-| O(n²) | Quadratic | Simple sorting (BubbleSort, InsertionSort) |
-| O(n³) | Cubic | Matrix multiplication (naive) |
-| O(2ⁿ) | Exponential | Generating all subsets, some recursive algorithms |
-| O(n!) | Factorial | Generating all permutations, traveling salesman (brute force) |
+| Notation | Name | Example | Problem Size Growth |
+|----------|------|---------|---------|
+| O(1) | Constant | Array access, arithmetic operations | No change |
+| O(log n) | Logarithmic | Binary search, balanced tree operations | Doubles for +1 time |
+| O(n) | Linear | Linear search, traversing an array | Doubles for 2x time |
+| O(n log n) | Linearithmic | Efficient sorting (MergeSort, QuickSort) | Grows slightly faster than linear |
+| O(n²) | Quadratic | Simple sorting (BubbleSort, InsertionSort) | Halves for 1/4 time |
+| O(n³) | Cubic | Matrix multiplication (naive) | ~1/3 for 1/9 time |
+| O(2ⁿ) | Exponential | Generating all subsets, some recursive algorithms | -1 for 1/2 time |
+| O(n!) | Factorial | Generating all permutations, traveling salesman (brute force) | Very rapid growth |
 
 Comparing them, for $n=1,000,000$:
 | Complexity | Operations |
@@ -115,41 +253,110 @@ Comparing them, for $n=1,000,000$:
 ---
 ## Analyzing Algorithms
 
-Rules for Analysis:
-1. **Sequential statements:** Add complexities
-```cpp
-S1; S2; S3;
-```
-$\rightarrow T(n) = T(S1) + T(S2) + T(S3)$
+#### General Analysis Rules:
+1. **Sequential Statements:** Add complexities
+$$
+T_{total} = T_1 + T_2 + ... + T_k = O(max(T_1, T_2, ..., T_k))
+$$
 
-2. **Conditionals:** Take maximum
+Example:
+```cpp
+statement_1;  // O(n)
+statement_2;  // O(n²)
+statement_3;  // O(n log n)
+```
+Total: $O(n)+O(n^2)+O(n log(n))=O(n^2)$
+
+2. **Conditionals Statements:** Take the maximum of the branches
 ```cpp
     if (condition) {
-       S1;  // O(f(n))
+       // O(f(n))
    } else {
-       S2;  // O(g(n))
+       // O(g(n))
    }
 ```
+Total: $O(max(f(n), g(n)))$
 
-$\rightarrow T(n) = max(O(f(n)), O(g(n)))$
-
-3. **Loops:** Multiply iterations by body complexity
+3. **Loops:** Multiply iterations by loop body complexity
 ```cpp
     for (int i = 0; i < n; i++) {
-       S;  // O(f(n))
+       // O(f(n))
    }
 ```
-$\rightarrow T(n) = n \cdot O(f(n))$
+Total: $O(n \cdot f(n))$
 
-4. **Nested loops:** Multiply complexities
+
+4. **Nested loops:** Multiply complexities of all loops
 ```cpp
-for (int i = 0; i < n; i++) {
-       for (int j = 0; j < n; j++) {
-           S;  // O(1)
+for (int i = 0; i < n; i++) {           // O(n)
+       for (int j = 0; j < n; j++) {    // O(n)
+           // O(1)
        }
    }
 ```
-$\rightarrow T(n) = O(n \cdot n \cdot 1) = O(n^2)$
+Total: $O(n \cdot n \cdot 1) = O(n^2)$
+
+5. **Recursive Algorithms**: For recursive algorithms, set up and solve a recurrence relation
+```cpp
+int factorial(int n) {
+    if (n <= 1) return 1;           // T(1) = O(1)
+    return n * factorial(n-1);      // T(n) = T(n-1) + O(1)
+}
+```
+Recurrence:
+$$T(n)=T(n-1)+c$$
+
+$$T(1)=c$$
+
+
+---
+## Recurrence Relations
+Recurrence relations are equations that define sequences recursively. They appear naturally when analyzing recursive algorithms.
+
+**Common Forms and Solutions**:
+1. Linear Recurrence with Constant Work
+$$
+T(n) = T(n-1) + c
+$$
+Solution: $T(n) = O(n)$
+
+2. Divide and Conquer (Split in Half)
+$$
+T(n) = 2T(n/2) + cn
+$$
+Solution: $T(n) = O(n log(n))$
+
+3. Single Recursive Call (Half Size)
+$$
+T(n)=T(n/2) +c
+$$
+Solution: $T(n)=O(log (n))$
+
+4. Linear Work, Smaller Problem
+$$
+T(n) = T(n-1) +cn
+$$
+Solution: $T(n)=O(n^2)$
+
+
+#### Master Theorem
+The Master Theorem provides a cookbook method for solving divide-and-conquer recurrences of the form:
+$$
+T(n) = aT(n/b) + f(n)
+$$
+where:
+- $a \geq 1$ (number of subproblems)
+- $b>1$ (factor by which problem size is reduced)
+- $f(n)$ (work done outside recursive calls)
+
+
+
+---
+## Amortized Analysis
+
+Amortized analysis provides a way to analyze the average cost per operation over a sequence of operations, even when individual operations may have varying costs.
+
+The key idea is that some expensive operations are compensated by many cheap operations, giving a better average cost than worst-case analysis of a single operation.
 
 ---
 ## Case Study: Maximum Subsequence Sum
