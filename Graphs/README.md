@@ -4,7 +4,7 @@
 1. [Introduction](#introduction)
 2. [Graph Traversal](#graph-traversals)
     1. [Depth-First Search (DFS)](#depth-first-search-dfs)
-    2. [Breadth-First Search (BFS)]
+    2. [Breadth-First Search (BFS)](#breadth-first-search-bfs)
 
 
 
@@ -102,3 +102,33 @@ Every pair of vertices connected.
 ## Graph Traversals
 
 ### Depth-First Search (DFS)
+The idea with Depth-First Search is to explore as deep as possible along each branch before backtracking. One strategy is to go to unvisited neighbor, repeat and when stuck backtrack.
+
+Complexity Analysis:
+- Time Complexity: $O(V+E)$
+- Space Complexity: $O(V)$
+
+Some Applications of DFS are:
+1. Path Finding
+2. Find all Paths
+3. Find all connected components in undirected graph
+4. Topological Sort: Order vertices in DAG so all edges go left to right (for tasks scheduling, course prerequisites)
+5. Cycle Detection
+6. Strongly Connected Components
+
+
+### Breadth-First Search (BFS)
+
+The idea with Breadth-First Search is to explore all neighbors at current level before moving to next level. The strategy is to use a queue: when we visit a vertex, we add all unvisited neighbors to queue.
+
+Complexity Analysis:
+- Time Complexity: $O(V+E)$
+- Space Complexity: $O(V)$
+
+Some Applications of BFS are:
+1. Shortest path (unweighted graphs)
+2. Level-order traversal
+3. Connected components
+4. Bipartite checking
+5. Finding all nodes within k distance
+6. Social network analysis (degrees of separation)
