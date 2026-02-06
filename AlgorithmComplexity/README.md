@@ -7,8 +7,10 @@
 4. [Big-O Notation](#big-o-notation)
 5. [Other Asymptotic Notations](#other-asymptotic-notations)
 6. [Analyzing Algorithms](#analyzing-algorithms)
-7. [Amortized Analysis](#amortized-analysis)
-8. [Case Study: Maximum Subsequence Sum](#case-study-maximum-subsequence-sum)
+7. [Recurrence Relations](#recurrence-relations)
+8. [Amortized Analysis](#amortized-analysis)
+9. [Case Study: Maximum Subsequence Sum](#case-study-maximum-subsequence-sum)
+10. [Practical Considerations](#practical-considerations)
 
 ---
 ## Introduction
@@ -358,10 +360,32 @@ Amortized analysis provides a way to analyze the average cost per operation over
 
 The key idea is that some expensive operations are compensated by many cheap operations, giving a better average cost than worst-case analysis of a single operation.
 
+As an example, let's consider a dynamic array that doubles in size when full:
+```cpp
+void push_back(int x) {
+    if (size == capacity) {
+        // Expensive: O(n) to copy all elements
+        resize(capacity * 2);
+    }
+    arr[size++] = x;  // Cheap: O(1)
+}
+```
+Individual Operation Analysis:
+- Most insertions: $O(1)$
+- Occasional resize: $O(n)$
+
+Even though some insertions cost $O(n)$, the average cost is $O(1)$
+
+
 ---
 ## Case Study: Maximum Subsequence Sum
 
-**Problem:** Given integers $a_1, a_2, ..., a_n$ (positive and/or negative), find the highest sum of consecutive elements.
+Let's analyze four different algorithms for this classic problem in depth.
+
+**Problem:** Given integers $a_1, a_2, ..., a_n$ (positive and/or negative), find the highest sum of consecutive elements:
+$$
+max_{1 \leq i \leq j \leq n} = \sum_{k=1}^j a_k​
+$$
 
 **Examples**:
 1. [-2, 11, -4, 13, -4, 2]
@@ -410,7 +434,7 @@ This is very slow for large inputs
 
 #### Algorithm 2: Improved (Quadratic)
 
-We don't need the inner k loop. We can compute `sum[i,j]` from `sum[i,j-1]`.
+Note that $sum[i,j]=sum[i,j-1]+a[j]$. No need to recompute.
 
 ```cpp
 template 
@@ -442,13 +466,7 @@ This is much better but there is still some room for improvement.
 
 #### Algorithm 3: Linear (Kadane's Algorithm)
 
-If a subsequence [i, j] has negative sum, then [i, q] (where q>j) cannot be the maximum.
-
-The key idea here is to:
-- Scan the array from left to right 
-- Keep running sum
-- If running sum becomes negative, reset to 0
-- Track maximum sum seen
+The key insight of this approach is that if a partial sum becomes negative, it cannot contribute to a maximum sum that includes later elements. So reset to 0.
 
 ```cpp
 template 
@@ -480,8 +498,8 @@ Optimal.
 #### Algorithm 4: Divide and Conquer
 
 The idea behind this algorithm is to divide array in half. Maximum subsequence is either:
-1. Entirely in left half (recursive)
-2. Entirely in right half (recursive)
+1. Entirely in left half (solve recursive)
+2. Entirely in right half (solve recursive)
 3. Crosses the middle (compute directly)
 
 ```cpp
@@ -533,7 +551,22 @@ Comparable maxSubSum4(const vector& a) {
 }
 ```
 
-Comparison of all Four Algorithms
+Recurrence:
+$$
+T(n) = 2T(n/2)+O(n)
+$$
+
+The $O(n)$ comes from the two loops finding max border sums. Using Master Theorem:
+- $a=2$, $b=2$, $f(n)=n$
+- $c=log_22=1$
+- $f(n)=n=\Theta(n^c)$
+- Case 2: $T(n)= \Theta(n log(n))$
+
+Conclusion: $T(n)=\Theta (n log(n))$
+Space: $S(n)=O(log(n))$
+
+
+#### Comparison of all Four Algorithms
 
 | Algorithm | Time Complexity | Space Complexity |
 |-----------|----------------|------------------|
@@ -541,3 +574,66 @@ Comparison of all Four Algorithms
 | Algorithm 2 | O(n²) | O(1) |
 | Algorithm 3 | O(n) | O(1) |
 | Algorithm 4 | O(n log n) | O(log n) |
+
+
+---
+## Practical Considerations
+
+There are some times when Big-O does not tell the whole story.
+
+#### Hidden Constants
+Let's suppose we have two algorithms A and B where:
+- Algorithm A: $T_A(n)=100n$ (Time Complexity $O(n)$)
+- Algorithm B: $T_B(n)=n^2$ (Time Complexity $O(n^2)$)
+
+Growth rate of A is smaller, so we could predict that algorithm A would be faster every time. But in reality, for $n<100$, the algorithm B is faster.
+
+For small inputs, constants matter.
+Also, some times when there are big discrepencies between best-case, average-case and worst-case scenario, the best worst-case scenario might not be the best case scenario.
+
+#### Cache Effects
+
+Modern processors have memory hierarchies (L1/L2/L3 cache, RAM). Algorithms that access memory sequentially (good cache locality) can be much faster than random-access algorithms, even with same Big-O.
+
+**Example**:
+```cpp
+// Good cache locality (row-major order)
+for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        sum += matrix[i][j];  // Sequential access
+    }
+}
+
+// Poor cache locality (column-major in row-major storage)
+for (int j = 0; j < n; j++) {
+    for (int i = 0; i < n; i++) {
+        sum += matrix[i][j];  // Strided access
+    }
+}
+```
+
+Both are $O(n^2)$, but first can be 10x faster due to cache friendly usage.
+
+
+#### Choosing the Right Algorithm
+
+Decision Factors:
+1. **Input size**
+2. **Input characteristics**
+3. **Required guarantees**
+4. **Speed constraints**
+5. **Implementation complexity**
+
+
+#### Profiling vs Analysis
+
+Theoretical analysis tells us:
+- Scalability to large inputs
+- Theoretical limits
+- Asymptotic behavior
+
+Profiling tells you:
+- Actual bottlenexks in our code
+- Real-world performance
+- Implementation-specific issues
+
